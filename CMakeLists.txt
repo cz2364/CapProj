@@ -26,11 +26,9 @@ endif()
 # automatically. Keep that in mind when changing files, or explicitly mention them here.
 file(GLOB_RECURSE headers CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h")
 file(GLOB_RECURSE sources CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
-file(GLOB_RECURSE sources2 CONFIGURE_DEPENDS "src/*.cpp")
 
 # Create library
-#add_library(CapProj src/defs.cpp)
-add_library(CapProj ${sources2}$)
+add_library(CapProj src/defs.cpp)
 target_include_directories(CapProj PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
