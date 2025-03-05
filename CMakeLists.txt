@@ -19,6 +19,9 @@ if(NOT googletest_POPULATED)
   add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
 endif()
 
+find_package (Eigen3 3.4 REQUIRED NO_MODULE)
+set(EIGEN_ROOT_DIR "/usr/local/include/eigen/3.4.0_1/include/eigen3/")
+link_directories(${EIGEN_ROOT_DIR})
 
 # ---- Add source files ----
 
@@ -28,15 +31,17 @@ file(GLOB_RECURSE headers CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include
 file(GLOB_RECURSE sources CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
 # Create library
-add_library(CapProj src/defs.cpp)
+add_library(CapProj src/defs.cpp src/utils.cpp)
 target_include_directories(CapProj PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${EIGEN_ROOT_DIR}
 )
 
 
 # Create test executable
 add_executable(CapProjTest test/defs_test.cpp)
-target_link_libraries(CapProjTest CapProj GTest::gtest_main)
+target_link_libraries(CapProjTest CapProj GTest::gtest_main Eigen3::Eigen)
+
 
 # Enable testing with CTest
 include(GoogleTest)
