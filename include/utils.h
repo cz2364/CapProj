@@ -16,4 +16,6 @@ void box_proj_inplace(std::vector<double>&x,
                       const std::vector<double>& ub,
                       const std::vector<double>& lb);
 
+std::string generate_variable_name(std::string x);
+
 #endif
