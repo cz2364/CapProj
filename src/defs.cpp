@@ -102,6 +102,19 @@ std::unordered_map<std::string, std::pair<long, std::pair<double, double> > > & 
     return cone_variable_name_index_bounds;
 }
 
+long Task::VariablesManager::get_num_primal_variables(){
+    return num_primal_variables;
+}
+
+long Task::VariablesManager::get_num_dual_variables(){
+    return num_dual_variables;
+}
+
+long Task::VariablesManager::get_num_cone_variables(){
+    return num_cone_variables;
+}
+
+
 Task::ConstraintsManager::ConstraintsManager(){
     constraints_names = std::vector<std::string>();
     constraints_indices = std::vector<long>();
@@ -382,4 +395,14 @@ void::Task::ConesManager::add_rotated_cone(std::string cone_name,
     num_cones += 1;
 
 
+}
+
+void Task::solve(){
+    LOG(INFO) << "Preparing to solve the task";
+    long num_primal_var =vars.get_num_primal_variables();
+    long num_dual_var = vars.get_num_dual_variables();
+    long num_cone_var = vars.get_num_cone_variables();
+
+    
+    
 }

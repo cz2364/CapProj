@@ -43,6 +43,33 @@ TEST(UtilsTest, VarNamesTest){
     EXPECT_EQ(generate_variable_name(s5), "x__COPY_12");
 }
 
+TEST(UtilsTest, StdSocProjTest){
+    std::vector<double> x1 = {6.0, 3.0, 4.0};
+    std::vector<double> r1 = {6.0, 3.0, 4.0};
+
+    std::vector<double> x2 = {2.5, 3.0, 4.0};
+    std::vector<double> r2 = {3.75, 2.25, 3.0};
+
+    std::vector<double> x3 = {-1.0, 3.0, 4.0};
+    std::vector<double> r3 = {2.0, 1.2, 1.6};
+
+    std::vector<double> x4 = {-6.0, 3.0, 4.0};
+    std::vector<double> r4 = {0.0, 0.0, 0.0};
+
+    std::vector<double> v1 = std_soc_proj(x1);
+    std::vector<double> v2 = std_soc_proj(x2);
+    std::vector<double> v3 = std_soc_proj(x3);
+    std::vector<double> v4 = std_soc_proj(x4);
+
+    for(int i = 0; i < 3; i++){
+        EXPECT_DOUBLE_EQ(r1[i], v1[i]);
+        EXPECT_DOUBLE_EQ(r2[i], v2[i]);
+        EXPECT_DOUBLE_EQ(r3[i], v3[i]);
+        EXPECT_DOUBLE_EQ(r4[i], v4[i]);
+    }
+
+}
+
 
 TEST(DefsTest, EigenMatrixTest){
     Eigen::MatrixXf m(2, 3);

@@ -55,7 +55,6 @@ class Solver{
         // we need to store a vector of F and a vector of u with the same size to track the cones
         std::vector<Eigen::SparseMatrix<double> > F;
         std::vector<Eigen:: VectorXf> u;
-        std::vector<StdSoc> socs;        
         // lc <= Ax <= uc 
         Eigen::MatrixXf A;
         Eigen::VectorXf lc;
@@ -87,7 +86,6 @@ class Task{
             void add_duals(std::vector<std::string> var_names, std::vector<Domain> senses);
             void add_cone(std::string var_name, double lb, double ub);
 
-
             std::vector<std::string> const & get_primal_variable_names() const;
             std::vector<long> const & get_primal_variable_indices() const;
             std::vector<double> const & get_primal_variable_values() const;
@@ -102,6 +100,10 @@ class Task{
             std::unordered_map<std::string, std::pair<long, std::pair<double, double> > > const & get_dual_variable_name_index_bounds() const;
             std::unordered_map<std::string, std::pair<long, double> > const & get_cone_variable_name_index_value() const;
             std::unordered_map<std::string, std::pair<long, std::pair<double, double> > > & get_cone_variable_name_index_bounds();
+
+            long get_num_primal_variables();
+            long get_num_dual_variables();
+            long get_num_cone_variables();
 
         private:
             std::vector<std::string> primal_variable_names;

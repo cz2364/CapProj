@@ -42,3 +42,31 @@ std::string generate_variable_name(std::string x) {
         }
     }
 }
+
+std::vector<double> std_soc_proj(const std::vector<double>& x){
+    int n = x.size();
+    std::vector<double> result(n, 0.0);
+    
+    double norm = 0.0;
+    for(int i = 1; i<n; i++){
+        norm += x[i] * x[i];
+    }
+    norm = sqrt(norm);
+
+    if (norm < -x[0]){
+        return result;
+    }else if(norm < x[0]) {
+        for(int i = 0; i < n; i++){
+            result[i] = x[i];
+        }
+        return result;
+    }else{
+        double multiplier = (1 + x[0] / norm) / 2.0;
+        result[0] = multiplier * norm;
+        for(int i = 1; i < n; i++){
+            result[i] = multiplier * x[i];
+        }
+        return result;
+    }
+
+}
