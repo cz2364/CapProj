@@ -22,6 +22,18 @@ std::vector<double> box_proj(const std::vector<double>& x, const std::vector<dou
     return px;
 }
 
+Eigen::VectorXd box_proj(const Eigen::VectorXd x, 
+    const std::unordered_map<long, std::pair<double, double> > bounds){
+        Eigen::VectorXd px = x;
+        for (auto it = bounds.begin(); it != bounds.end(); ++it) {
+            long index = it->first;
+            double lb = it->second.first;
+            double ub = it->second.second;
+            px[index] = std::max(lb, std::min(px[index], ub));
+        }
+        return px;
+    }
+
 std::string generate_variable_name(std::string x) {
     std::string pattern = "__COPY_";
     std::size_t found = x.rfind(pattern);
@@ -69,4 +81,35 @@ std::vector<double> std_soc_proj(const std::vector<double>& x){
         return result;
     }
 
+}
+Eigen::VectorXd std_soc_proj(Eigen::VectorXd & x){
+    int n = x.size();
+    Eigen::VectorXd result(n);
+    
+    double norm = 0.0;
+    for(int i = 1; i<n; i++){
+        norm += x[i] * x[i];
+    }
+    norm = sqrt(norm);
+
+    if (norm < -x[0]){
+        return result;
+    }else if(norm < x[0]) {
+        for(int i = 0; i < n; i++){
+            result[i] = x[i];
+        }
+        return result;
+    }else{
+        double multiplier = (1 + x[0] / norm) / 2.0;
+        result[0] = multiplier * norm;
+        for(int i = 1; i < n; i++){
+            result[i] = multiplier * x[i];
+        }
+        return result;
+    }
+
+}
+
+double weighted_norm(Eigen::VectorXd x, Eigen::VectorXd y, double w){
+    return std::sqrt(w * x.norm() * x.norm() + 1.0 / w * y.norm() * y.norm());
 }

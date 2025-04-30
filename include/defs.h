@@ -9,6 +9,9 @@
 #include <Eigen/Sparse>
 #include <limits>
 
+typedef Eigen::SparseMatrix<double, Eigen::RowMajor> SpMat; // declares a row-major sparse matrix type of double
+typedef Eigen::Triplet<double> T;
+
 
 enum class Domain{
     leq,
@@ -16,6 +19,12 @@ enum class Domain{
     geq,
     incone,
 };
+
+enum class Sense{
+    minimize,
+    maximize,
+};
+
 
 
 struct SolverParams{
@@ -45,29 +54,37 @@ class Solver{
       
     
     public:
-        Solver();
+        Solver(SpMat c, SpMat A, Eigen::VectorXd b, 
+               std::vector<std::vector<long> > cones_var_indices,
+               std::unordered_map<long, std::pair<double, double> > primal_proj_bounds,
+               std::unordered_map<long, std::pair<double, double> > dual_proj_bounds,
+               long num_primal_var,
+               long num_cone_var,
+               long num_dual_var,
+               SolverParams params);
+        Solver(const Solver& solver) = delete;
+        Solver& operator=(const Solver& solver) = delete;
         void solve();
-    private:
-        Eigen::VectorXf x, p1, p2, p3;
-        Eigen::VectorXf b1, b2, b3;
-        Eigen::SparseMatrix<double> A1, A2, A3;
-        // assume we don't know the number of conic variables beforehand
-        // we need to store a vector of F and a vector of u with the same size to track the cones
-        std::vector<Eigen::SparseMatrix<double> > F;
-        std::vector<Eigen:: VectorXf> u;
-        // lc <= Ax <= uc 
-        Eigen::MatrixXf A;
-        Eigen::VectorXf lc;
-        Eigen::VectorXf uc;
-        // lb <= x <= ub
-        Eigen::VectorXf lb;
-        Eigen::VectorXf ub;
-        // Fx = u
-
-        void onePDHGStep();
+        std::pair<double, double> onePDHGStep(Eigen::VectorXd& p_n_c, 
+                                              Eigen::VectorXd& p_n_c_new,
+                                              Eigen::VectorXd& d,
+                                              Eigen::VectorXd& d_new, 
+                                              double primal_weight, 
+                                              double step_size, 
+                                              long n_outer_iter);
         void computeRestartCandidate();
         void primalWeightUpdate();
-
+    private:
+        SpMat c; // 1 * (np + nc)
+        SpMat A; // nd * (np + nc)
+        Eigen::VectorXd b; // nd * 1
+        std::vector<std::vector<long> > cones_var_indices; 
+        std::unordered_map<long, std::pair<double, double> > primal_proj_bounds; // np
+        std::unordered_map<long, std::pair<double, double> > dual_proj_bounds;   //nd
+        long num_primal_var, num_cone_var, num_dual_var; 
+        SolverParams params;
+        Eigen::VectorXd var_p_n_c;
+        Eigen::VectorXd var_d;
 
 };
 
@@ -86,20 +103,20 @@ class Task{
             void add_duals(std::vector<std::string> var_names, std::vector<Domain> senses);
             void add_cone(std::string var_name, double lb, double ub);
 
-            std::vector<std::string> const & get_primal_variable_names() const;
-            std::vector<long> const & get_primal_variable_indices() const;
-            std::vector<double> const & get_primal_variable_values() const;
-            std::unordered_map<std::string, std::pair<long, double> > const & get_primal_variable_name_index_value() const;
-            std::vector<double> const & get_primal_variable_lower_bounds() const;
-            std::vector<double> const & get_primal_variable_upper_bounds() const;
-            std::unordered_map<std::string, std::pair<long, std::pair<double, double> > > const & get_primal_variable_name_index_bounds() const;
-            std::vector<std::string> const & get_dual_variable_names() const;
-            std::vector<long> const & get_dual_variable_indices() const;
-            std::vector<double> const & get_dual_variable_values() const;
-            std::unordered_map<std::string, std::pair<long, double> > const & get_dual_variable_name_index_value() const;
-            std::unordered_map<std::string, std::pair<long, std::pair<double, double> > > const & get_dual_variable_name_index_bounds() const;
-            std::unordered_map<std::string, std::pair<long, double> > const & get_cone_variable_name_index_value() const;
-            std::unordered_map<std::string, std::pair<long, std::pair<double, double> > > & get_cone_variable_name_index_bounds();
+            const std::vector<std::string>&  get_primal_variable_names() const;
+            const std::vector<long>&  get_primal_variable_indices() const;
+            const std::vector<double>& get_primal_variable_values() const;
+            const std::unordered_map<std::string, std::pair<long, double> >& get_primal_variable_name_index_value() const;
+            const std::vector<double>& get_primal_variable_lower_bounds() const;
+            const std::vector<double>& get_primal_variable_upper_bounds() const;
+            const std::unordered_map<std::string, std::pair<long, std::pair<double, double> > >& get_primal_variable_name_index_bounds() const;
+            const std::vector<std::string>& get_dual_variable_names() const;
+            const std::vector<long>& get_dual_variable_indices() const;
+            const std::vector<double>& get_dual_variable_values() const;
+            const std::unordered_map<std::string, std::pair<long, double> >& get_dual_variable_name_index_value() const;
+            const std::unordered_map<std::string, std::pair<long, std::pair<double, double> > >& get_dual_variable_name_index_bounds() const;
+            const std::unordered_map<std::string, std::pair<long, double> >& get_cone_variable_name_index_value() const;
+            const std::unordered_map<std::string, std::pair<long, std::pair<double, double> > >& get_cone_variable_name_index_bounds() const;
 
             long get_num_primal_variables();
             long get_num_dual_variables();
@@ -166,6 +183,11 @@ class Task{
                                           std::vector<std::string> cone_vars,
                                           VariablesManager& vars); 
             std::set<std::string> get_constraints_linear_var_names_set();
+            long get_num_constraints();
+            long get_num_nnz();
+            const std::vector<std::vector<std::string> >& get_constraints_vars_lists() const;
+            const std::vector<double>& get_constraints_b() const;
+            const std::vector<std::vector<double> > & get_constraints_A() const;
         private:
             std::vector<std::string> constraints_names;
             std::vector<long> constraints_indices;
@@ -177,6 +199,7 @@ class Task{
             std::set<std::string> constraints_linear_var_names_set;
             std::set<std::string> constraints_cone_var_names_set;
             long num_constraints;
+            long num_nnz;
     };
     class ConesManager{
         // every second order cone must be registered at the constraints manager
@@ -191,6 +214,8 @@ class Task{
                                   std::vector<std::string> var_names, 
                                   VariablesManager& vars,
                                   ConstraintsManager& cons);
+            long get_num_cones();
+            const std::vector<std::vector<std::string> >& get_cones_var_names() const;
 
         private:
             std::vector<std::string> cones_names;
@@ -200,14 +225,30 @@ class Task{
             std::set<std::string> cones_var_names_set;
             long num_cones;
     };
+    class ObjManager{
+        public:
+            ObjManager();
+            void set_obj_sense(Sense sense);
+            void set_obj_coeff(std::string var_name, double coeff, VariablesManager& vars);
+            void set_obj_coeffs(std::unordered_map<std::string, double> coeffs, VariablesManager& vars);
+            void set_obj_coeffs(std::vector<std::string> var_names, std::vector<double> coeffs, VariablesManager& vars);
+            const std::unordered_map<std::string, double> & get_obj_coeffs() const;
+        private:
+            Sense obj_sense;
+            std::unordered_map<std::string, double> obj_coeffs;
+    };
+    
 
     public:
         Task();
         void solve();
+        long find_variable_sol_index(std::string vn);
+
     private:
         VariablesManager vars;
         ConstraintsManager cons;
         ConesManager cones;
+        ObjManager objs;
     
 };
 
